@@ -23,6 +23,7 @@ s.listen()
 client, addr = s.accept()
 print("Connected from: ", addr)
 
+logs = open("./logs.log", "a")
 run = True
 while run:
     try:
@@ -34,14 +35,19 @@ while run:
 
         if cmd == DC_MSG:
             print("Disconnected...")
+            logs.close()
             run = False
             break
         if cmd == "\n": 
             continue
-            
-
         msg = client.recv(BUFFER).decode(FORMAT)
         print(msg)
+        msg += "\n"
+        logs.write(msg)
+    except KeyboardInterrupt:
+        print("\nDisconnected...")
+        logs.close()
+        run = False
     except:
         print("Client lost... reconnected")
         client, addr = s.accept()
