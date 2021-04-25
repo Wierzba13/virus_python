@@ -11,7 +11,7 @@ def get_local_ip():
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 HOST = get_local_ip()
-PORT = 5051
+PORT = 5052
 SERVER = (HOST, PORT)
 FORMAT = "utf-8"
 BUFFER = 8192
@@ -33,7 +33,11 @@ while run:
     try:
         cmd = ""
         while cmd == "":
-            cmd = input(colorama.Fore.CYAN + ">>> " + colorama.Fore.RESET)
+            # cmd = input(colorama.Fore.CYAN + ">>> " + colorama.Fore.RESET)
+            # cmd = input(f"{colorama.Fore.CYAN} >>> {colorama.Fore.RESET}")
+            ## Use print here for colorize prompt
+            print(f"{colorama.Fore.CYAN}>>> ", end="")
+            cmd = input()
 
         client.send(cmd.encode(FORMAT))
 
